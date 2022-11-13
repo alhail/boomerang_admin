@@ -1,11 +1,35 @@
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 
-void main() => runApp(const MaterialApp(home: MyHome()));
+const kWebRecaptchaSiteKey = '6Lefm-wiAAAAAHEU6LGhlqe1iDnVf06RqtEy-mr-';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    // Replace with actual values
+    options: const FirebaseOptions(
+      apiKey: "AIzaSyBUSw4JWU67owSd7uYbH32PhRIC2ba2B58",
+      appId: "1:360567506415:web:a6e7c666e7ff61af59621a",
+      messagingSenderId: "360567506415",
+      projectId: "bommerang-7bfe0",
+      storageBucket: "bommerang-7bfe0.appspot.com",
+      databaseURL: "https://bommerang-7bfe0-default-rtdb.europe-west1.firebasedatabase.app",
+    ),
+  );
+  WidgetsFlutterBinding.ensureInitialized();
+  await FirebaseAppCheck.instance.activate(
+    //androidProvider: AndroidProvider.debug,
+    webRecaptchaSiteKey: kWebRecaptchaSiteKey,
+  );
+  runApp(const MaterialApp(home: MyHome()));
+}
 
 class MyHome extends StatelessWidget {
   const MyHome({Key? key}) : super(key: key);
@@ -40,6 +64,8 @@ class _QRViewExampleState extends State<QRViewExample> {
   QRViewController? controller;
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
 
+  final DatabaseReference _mesRef = FirebaseDatabase.instance.ref().child('private').child('codes');
+
   // In order to get hot reload to work we need to pause the camera if the platform
   // is android, or resume the camera if the platform is iOS.
   @override
@@ -65,8 +91,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <Widget>[
                   if (result != null)
-                    Text(
-                        'Barcode Type: ${describeEnum(result!.format)}   Data: ${result!.code}')
+                    Text('Barcode Type: ${describeEnum(result!.format)}   Data: ${result!.code}')
                   else
                     const Text('Scan a code'),
                   Row(
@@ -127,9 +152,60 @@ class _QRViewExampleState extends State<QRViewExample> {
                         child: ElevatedButton(
                           onPressed: () async {
                             await controller?.resumeCamera();
+                            if(result != null){
+
+
+                            }
                           },
                           child: const Text('resume',
                               style: TextStyle(fontSize: 20)),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 200,
+                        height: 50,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFFD06700),
+                              foregroundColor: Colors.black,
+                              //padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 30),
+                              //fixedSize: const Size(0, 50),
+                              shape: const BeveledRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(5)))
+                          ),
+                          child: Text('Send Code', style: TextStyle(fontSize: 18)),
+                          onPressed: () {
+                            showDialog<String>(
+                              context: context,
+                              builder: (BuildContext context) => AlertDialog(
+                                title: Text('Send Code'),
+                                content: Text('resetChatMessage'),
+                                actions: <Widget>[
+                                  TextButton(
+                                    child: Text('cancel'),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                  TextButton(
+                                    onPressed: () async {
+                                      if(result != null && result?.code != null){
+                                        int? length = result!.code?.length;
+                                        String? code = result?.code.toString().split("/").last;
+                                        print(code! + "+++++++++++++++++++++++++++++" + result!.code.toString());
+                                        await _mesRef.set({
+                                          code.toString(): {
+                                            "status": false
+                                          }
+                                        });
+                                        Navigator.of(context).pop();
+                                      }
+                                    },
+                                    child: Text('confirm'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
                       )
                     ],
