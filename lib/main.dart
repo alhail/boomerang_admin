@@ -1,5 +1,7 @@
 import 'dart:developer';
 import 'dart:io';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -13,39 +15,136 @@ const kWebRecaptchaSiteKey = '6Lefm-wiAAAAAHEU6LGhlqe1iDnVf06RqtEy-mr-';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-    // Replace with actual values
-    options: const FirebaseOptions(
-      apiKey: "AIzaSyBUSw4JWU67owSd7uYbH32PhRIC2ba2B58",
-      appId: "1:360567506415:web:a6e7c666e7ff61af59621a",
-      messagingSenderId: "360567506415",
-      projectId: "bommerang-7bfe0",
-      storageBucket: "bommerang-7bfe0.appspot.com",
-      databaseURL: "https://bommerang-7bfe0-default-rtdb.europe-west1.firebasedatabase.app",
-    ),
+    options: DefaultFirebaseOptions.currentPlatform,
   );
+
   WidgetsFlutterBinding.ensureInitialized();
-  await FirebaseAppCheck.instance.activate(
-    //androidProvider: AndroidProvider.debug,
-    webRecaptchaSiteKey: kWebRecaptchaSiteKey,
-  );
-  runApp(const MaterialApp(home: MyHome()));
+  FirebaseAppCheck firebaseAppCheck = FirebaseAppCheck.instance;
+  firebaseAppCheck.installAppCheckProviderFactory(
+      PlayIntegrityAppCheckProviderFactory.());
+
+  runApp(MaterialApp(home: TestForConnection()));
 }
 
+class TestForConnection extends StatelessWidget {
+  TestForConnection({Key? key}) : super(key: key);
+
+  final DatabaseReference _mesRef = FirebaseDatabase.instance.ref().child('private').child('codes');
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Flutter Demo Home Page')),
+      body: Column(
+        children: [
+          SizedBox(
+            width: 200,
+            height: 50,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFFD06700),
+                  foregroundColor: Colors.black,
+                  //padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 30),
+                  //fixedSize: const Size(0, 50),
+                  shape: const BeveledRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(5)))
+              ),
+              child: Text('Send Code', style: TextStyle(fontSize: 18)),
+              onPressed: () {
+                showDialog<String>(
+                  context: context,
+                  builder: (BuildContext context) => AlertDialog(
+                    title: Text('Send Code'),
+                    content: Text('resetChatMessage'),
+                    actions: <Widget>[
+                      TextButton(
+                        child: Text('cancel'),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          print("test test test ++++++++++++++++++");
+                          //
+                          await _mesRef.child("PAAAAA5").child("status").set(false);
+                        },
+                        child: Text('confirm'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          )
+        ],
+      )
+    );
+  }
+}
+
+
 class MyHome extends StatelessWidget {
-  const MyHome({Key? key}) : super(key: key);
+  MyHome({Key? key}) : super(key: key);
+
+  final DatabaseReference _mesRef = FirebaseDatabase.instance.ref().child('private').child('codes');
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Flutter Demo Home Page')),
       body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) => const QRViewExample(),
-            ));
-          },
-          child: const Text('qrView'),
+        child: Column(
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const QRViewExample(),
+                ));
+              },
+              child: const Text('qrView'),
+            ),
+            SizedBox(
+              width: 200,
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFFD06700),
+                    foregroundColor: Colors.black,
+                    //padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 30),
+                    //fixedSize: const Size(0, 50),
+                    shape: const BeveledRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(5)))
+                ),
+                child: Text('Send Code', style: TextStyle(fontSize: 18)),
+                onPressed: () {
+                  showDialog<String>(
+                    context: context,
+                    builder: (BuildContext context) => AlertDialog(
+                      title: Text('Send Code'),
+                      content: Text('resetChatMessage'),
+                      actions: <Widget>[
+                        TextButton(
+                          child: Text('cancel'),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            await _mesRef.set({
+                              "PAAAAA1": {
+                                "status": false
+                              }
+                            });
+                          },
+                          child: Text('confirm'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            )
+          ],
         ),
       ),
     );
